@@ -61,6 +61,7 @@ fun HomeScreen(
                 .padding(
                     12.dp
                 )
+
         ) {
             OutlinedTextField(
                 modifier = Modifier
