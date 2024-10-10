@@ -1,6 +1,9 @@
 package com.example.flightsearchapp.ui.home
 
 import android.util.Log
+import androidx.compose.material3.TextField
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.w3c.dom.Text
 
 
 private const val TAG = "home_vm"
@@ -35,8 +39,18 @@ class HomeViewModel(
     private lateinit var _allAirports: List<Airport>
 
 
-    var textState = MutableStateFlow<String>("")
-        private set
+    private var _textState = MutableStateFlow("")
+
+    val textState: StateFlow<TextFieldValue> = _textState.map {
+        TextFieldValue(
+            text = it, selection = TextRange(it.length)
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = TextFieldValue(text = "", selection = TextRange(0))
+    )
+
 
     var recommendationState = MutableStateFlow(emptyList<Airport>())
         private set
@@ -72,9 +86,7 @@ class HomeViewModel(
             }
         }
     }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        mutableListOf()
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), mutableListOf()
     )
 
 
@@ -84,7 +96,7 @@ class HomeViewModel(
 
             userSearchRepository.searchQuery.collect {
                 if (it != null) {
-                    textState.value = it
+                    _textState.value = it
                     getRecommendation()
                 }
             }
@@ -147,12 +159,12 @@ class HomeViewModel(
     }
 
 
-    fun onTextChange(newText: String) {
-        textState.value = newText
+    fun onTextChange(newText: TextFieldValue) {
+        _textState.value = newText.text
         viewModelScope.launch {
-            userSearchRepository.saveSearchQuery(newText)
-            Log.i(TAG, "onTextChange: ${textState.value}")
-            if (textState.value.trim().isEmpty()) {
+            userSearchRepository.saveSearchQuery(newText.text)
+            Log.i(TAG, "onTextChange: ${_textState.value}")
+            if (_textState.value.trim().isEmpty()) {
                 _visibilityState.value = false
             } else {
                 getRecommendation()
@@ -162,8 +174,8 @@ class HomeViewModel(
     }
 
     private fun getRecommendation() {
-        if (textState.value.trim().isNotEmpty()) {
-            val flow = airportRepository.getSearchedAirports(textState.value.trim())
+        if (_textState.value.trim().isNotEmpty()) {
+            val flow = airportRepository.getSearchedAirports(_textState.value.trim())
             viewModelScope.launch {
                 flow.collect {
                     recommendationState.value = it

@@ -115,7 +115,7 @@ fun FlightList(
                                 Icons.Filled.Star,
                                 modifier = Modifier.size(32.dp),
                                 contentDescription = null,
-                                tint = if (flight.isFavorite) Color.Yellow else Color.Gray,
+                                tint = if (flight.isFavorite) Color.Blue else Color.Gray,
                             )
                         }
                     }

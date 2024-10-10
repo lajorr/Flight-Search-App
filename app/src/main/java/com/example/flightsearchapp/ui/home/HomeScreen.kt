@@ -20,13 +20,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -41,6 +45,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
 ) {
     val searchTextState by viewModel.textState.collectAsState()
+
+
     val recommendations by viewModel.recommendationState.collectAsState()
     val flightState by viewModel.flightState.collectAsState()
     val favoriteState by viewModel.favoriteFlightState.collectAsState()
@@ -84,28 +90,25 @@ fun HomeScreen(
                 ),
             )
             Spacer(modifier = Modifier.height(16.dp))
-            if (searchTextState.trim().isNotEmpty())
+            if (searchTextState.text.trim().isNotEmpty())
             //recommendations
                 if (!flightState.visibility) RecommendationList(
                     airportRecommendations = recommendations,
                     onRecommendationSelected = viewModel::onAirportSelected
                 )
-                else
-                    FlightList(
-                        flightList = flightState.flights,
-                        originIataCode = flightState.flights[0].origin.iataCode,
-                        onFavoriteClick = {
-                            coroutineScope.launch {
-                                viewModel.setFavorite(it)
-                            }
-                        })
-            else
-                FlightList(flightList = favoriteState, onFavoriteClick = {
-                    coroutineScope.launch {
-                        viewModel.setFavorite(it)
-                    }
+                else FlightList(flightList = flightState.flights,
+                    originIataCode = flightState.flights[0].origin.iataCode,
+                    onFavoriteClick = {
+                        coroutineScope.launch {
+                            viewModel.setFavorite(it)
+                        }
+                    })
+            else FlightList(flightList = favoriteState, onFavoriteClick = {
+                coroutineScope.launch {
+                    viewModel.setFavorite(it)
+                }
 
-                })
+            })
         }
 
 
